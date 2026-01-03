@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
-import { Chat, Message } from "@/types";
+import { Chat, Message } from "@/types/client";
 import { generateId } from "@/lib/helpers";
 
 export function useChat() {

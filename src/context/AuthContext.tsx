@@ -8,7 +8,7 @@ import {
   useEffect,
   ReactNode,
 } from "react";
-import { User, AuthContextType } from "@/types";
+import { User, AuthContextType } from "@/types/client";
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 

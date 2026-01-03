@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext, ReactNode } from "react";
-import { ChatContextType } from "@/types";
+import { ChatContextType } from "@/types/client";
 import { useChat } from "@/hooks/useChat";
 
 const ChatContext = createContext<ChatContextType | undefined>(undefined);

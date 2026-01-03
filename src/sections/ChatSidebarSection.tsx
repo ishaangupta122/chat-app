@@ -1,6 +1,6 @@
 "use client";
 
-import { Chat, User } from "@/types";
+import { Chat, User } from "@/types/client";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { SidebarHeader } from "@/components/layout/SidebarHeader";
 import { ChatList } from "@/components/chat/ChatList";

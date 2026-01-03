@@ -1,4 +1,4 @@
-import { Chat } from "@/types";
+import { Chat } from "@/types/client";
 import { cn } from "@/lib/utils";
 import { formatMessageTime } from "@/lib/helpers";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
