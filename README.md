@@ -107,6 +107,8 @@ npm run ws:dev
 
 ## 🗂️ Folder Structure
 
+```bash
+
 chat-app/
 ├── src/
 │   ├── app/
@@ -151,3 +153,4 @@ chat-app/
 ├── tsconfig.json
 └── README.md
 
+```
