@@ -83,19 +83,22 @@ export function SidebarHeader({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem>
+            <DropdownMenuItem className="cursor-pointer">
               <Users className="mr-2 h-4 w-4" />
               New Group
             </DropdownMenuItem>
-            <DropdownMenuItem>
+            <DropdownMenuItem className="cursor-pointer">
               <Star className="mr-2 h-4 w-4" />
               Starred Messages
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onSettings?.()}>
+            <DropdownMenuItem
+              className="cursor-pointer"
+              onClick={() => onSettings?.()}>
               <Settings className="mr-2 h-4 w-4" />
               Settings
             </DropdownMenuItem>
             <DropdownMenuItem
+              className="cursor-pointer"
               onClick={() => setTheme(theme === "dark" ? "light" : "dark")}>
               {theme === "dark" ? (
                 <Sun className="mr-2 h-4 w-4" />
@@ -106,7 +109,7 @@ export function SidebarHeader({
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem
-              className="text-destructive"
+              className="cursor-pointer text-destructive"
               onClick={() => onLogout?.()}>
               <LogOut className="mr-2 h-4 w-4" />
               Log out

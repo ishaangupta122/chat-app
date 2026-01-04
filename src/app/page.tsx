@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Chat, User, Message } from "@/types/client";
 import { ChatSidebarSection } from "@/sections/ChatSidebarSection";
 import { ChatAreaSection } from "@/sections/ChatAreaSection";
@@ -8,14 +9,15 @@ import { NewChatSection } from "@/sections/NewChatSection";
 import { ChatInfoSection } from "@/sections/ChatInfoSection";
 import { SettingsSection } from "@/sections/SettingsSection";
 import { cn } from "@/lib/utils";
-import {
-  currentUser,
-  contacts,
-  chats as initialChats,
-  getMessagesByChatId,
-} from "@/data";
+import { useAuth } from "@/context/AuthContext";
+import { Loader2 } from "lucide-react";
+import { contacts, chats as initialChats, getMessagesByChatId } from "@/data";
+import { toast } from "@/components/ui/toast";
 
 export default function ChatPage() {
+  const { user, isAuthenticated, isLoading, logout } = useAuth();
+  const router = useRouter();
+
   const [chats, setChats] = useState<Chat[]>(initialChats);
   const [activeChat, setActiveChat] = useState<Chat | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -24,10 +26,50 @@ export default function ChatPage() {
   const [showSettings, setShowSettings] = useState(false);
   const [isMobileViewingChat, setIsMobileViewingChat] = useState(false);
 
+  // Check for auth toast message from redirect
+  useEffect(() => {
+    const authToast = sessionStorage.getItem("auth_toast");
+    if (authToast) {
+      sessionStorage.removeItem("auth_toast");
+      try {
+        const { type, message } = JSON.parse(authToast);
+        if (type === "success") {
+          toast.success(message);
+        } else if (type === "error") {
+          toast.error(message);
+        }
+      } catch {
+        // Ignore parsing errors
+      }
+    }
+  }, []);
+
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated) {
+      router.push("/login");
+    }
+  }, [isLoading, isAuthenticated, router]);
+
+  // Create a User object from AuthUser for components
+  const currentUser: User = user
+    ? {
+        id: user.id,
+        name: user.name || user.email,
+        email: user.email,
+        avatar: user.avatar || undefined,
+        status: "online",
+      }
+    : {
+        id: "",
+        name: "",
+        email: "",
+        status: "offline",
+      };
+
   const handleSelectChat = useCallback((chat: Chat) => {
     setActiveChat(chat);
     setIsMobileViewingChat(true);
-    // Load messages for this chat from data.ts
     setMessages(getMessagesByChatId(chat.id));
   }, []);
 
@@ -92,9 +134,23 @@ export default function ChatPage() {
     setIsMobileViewingChat(false);
   }, []);
 
-  const handleLogout = useCallback(() => {
-    console.log("Logging out...");
-  }, []);
+  const handleLogout = useCallback(async () => {
+    await logout();
+  }, [logout]);
+
+  // Show loading state
+  if (isLoading) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-background">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  // Don't render if not authenticated (will redirect)
+  if (!isAuthenticated) {
+    return null;
+  }
 
   return (
     <div className="flex h-screen w-full overflow-hidden bg-background">
