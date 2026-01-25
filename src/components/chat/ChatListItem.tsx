@@ -1,4 +1,4 @@
-import { Chat } from "@/types/client";
+import { Chat, getDisplayName } from "@/types/client";
 import { cn } from "@/lib/utils";
 import { formatMessageTime } from "@/lib/helpers";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -15,7 +15,9 @@ export function ChatListItem({ chat, isActive, onClick }: ChatListItemProps) {
   const displayName =
     chat.type === "group"
       ? chat.name || "Group"
-      : chat.participants[0]?.name || "Unknown";
+      : chat.participants[0]
+      ? getDisplayName(chat.participants[0])
+      : "Unknown";
 
   const displayAvatar =
     chat.type === "group" ? chat.avatar : chat.participants[0]?.avatar;
@@ -48,7 +50,7 @@ export function ChatListItem({ chat, isActive, onClick }: ChatListItemProps) {
       <div className="relative">
         <Avatar className="h-12 w-12">
           <AvatarImage
-            src={displayAvatar}
+            src={displayAvatar ?? undefined}
             alt={displayName}
             className="object-cover"
           />

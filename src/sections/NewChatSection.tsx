@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { User } from "@/types/client";
+import { User, getDisplayName } from "@/types/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -35,7 +35,7 @@ export function NewChatSection({
   const [selectedMembers, setSelectedMembers] = useState<User[]>([]);
 
   const filteredContacts = contacts.filter((contact) =>
-    contact.name.toLowerCase().includes(searchQuery.toLowerCase())
+    getDisplayName(contact).toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const getInitials = (name: string) => {
@@ -112,12 +112,15 @@ export function NewChatSection({
                   key={member.id}
                   className="flex items-center gap-1 rounded-full bg-primary/10 py-1 pl-1 pr-2 text-sm text-primary">
                   <Avatar className="h-6 w-6">
-                    <AvatarImage src={member.avatar} alt={member.name} />
+                    <AvatarImage
+                      src={member.avatar ?? undefined}
+                      alt={getDisplayName(member)}
+                    />
                     <AvatarFallback className="bg-primary text-primary-foreground text-xs">
-                      {getInitials(member.name)}
+                      {getInitials(getDisplayName(member))}
                     </AvatarFallback>
                   </Avatar>
-                  <span>{member.name}</span>
+                  <span>{getDisplayName(member)}</span>
                   <button
                     onClick={() =>
                       setSelectedMembers((prev) =>
@@ -165,9 +168,12 @@ export function NewChatSection({
                     }`}>
                     <div className="relative">
                       <Avatar className="h-10 w-10">
-                        <AvatarImage src={contact.avatar} alt={contact.name} />
+                        <AvatarImage
+                          src={contact.avatar ?? undefined}
+                          alt={getDisplayName(contact)}
+                        />
                         <AvatarFallback className="bg-primary text-primary-foreground">
-                          {getInitials(contact.name)}
+                          {getInitials(getDisplayName(contact))}
                         </AvatarFallback>
                       </Avatar>
                       {contact.status === "online" && (
@@ -176,10 +182,10 @@ export function NewChatSection({
                     </div>
                     <div className="flex-1 text-left">
                       <p className="text-sm font-medium text-foreground">
-                        {contact.name}
+                        {getDisplayName(contact)}
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        {contact.email}
+                        @{contact.username}
                       </p>
                     </div>
                     {isGroupMode && (

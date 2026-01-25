@@ -1,6 +1,6 @@
 "use client";
 
-import { Chat, User } from "@/types/client";
+import { Chat, User, getDisplayName } from "@/types/client";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { SidebarHeader } from "@/components/layout/SidebarHeader";
 import { ChatList } from "@/components/chat/ChatList";
@@ -30,8 +30,8 @@ export function ChatSidebarSection({
     <Sidebar>
       <SidebarHeader
         user={{
-          name: user.name,
-          avatar: user.avatar,
+          displayName: getDisplayName(user),
+          avatar: user.avatar ?? undefined,
           status: user.status,
         }}
         onNewChat={onNewChat}

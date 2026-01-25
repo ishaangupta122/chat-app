@@ -1,21 +1,33 @@
 import { db } from "./index";
 
 // SQL Schema for users table
+// Privacy-first design:
+// - id: internal only, never exposed
+// - username: public, unique, the ONLY searchable field
+// - email/phone: private, never searchable
+// - is_discoverable: allows users to opt-out of search
 export const createUsersTableSQL = `
   CREATE TABLE IF NOT EXISTS users (
     id VARCHAR(26) PRIMARY KEY,
+    username VARCHAR(20) NOT NULL,
     email VARCHAR(255) NOT NULL,
-    name VARCHAR(255),
+    phone VARCHAR(20),
+    display_name VARCHAR(100),
+    bio VARCHAR(500),
     avatar TEXT,
     password_hash TEXT,
     provider VARCHAR(20) NOT NULL DEFAULT 'email',
     provider_id VARCHAR(255),
+    is_discoverable BOOLEAN NOT NULL DEFAULT true,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    UNIQUE(username),
     UNIQUE(email),
     UNIQUE(provider, provider_id)
   );
 
+  CREATE INDEX IF NOT EXISTS idx_users_username ON users(username);
+  CREATE INDEX IF NOT EXISTS idx_users_username_lower ON users(LOWER(username));
   CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
   CREATE INDEX IF NOT EXISTS idx_users_provider ON users(provider, provider_id);
 `;
@@ -51,12 +63,16 @@ export async function initializeSchema(): Promise<void> {
 // User row type from database
 export interface UserRow {
   id: string;
+  username: string;
   email: string;
-  name: string | null;
+  phone: string | null;
+  display_name: string | null;
+  bio: string | null;
   avatar: string | null;
   password_hash: string | null;
   provider: string;
   provider_id: string | null;
+  is_discoverable: boolean;
   created_at: Date;
   updated_at: Date;
 }

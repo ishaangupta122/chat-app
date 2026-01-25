@@ -1,6 +1,6 @@
 "use client";
 
-import { Chat } from "@/types/client";
+import { Chat, getDisplayName } from "@/types/client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -29,7 +29,9 @@ export function ChatHeader({ chat, onBack, onViewInfo }: ChatHeaderProps) {
   const displayName =
     chat.type === "group"
       ? chat.name || "Group"
-      : chat.participants[0]?.name || "Unknown";
+      : chat.participants[0]
+      ? getDisplayName(chat.participants[0])
+      : "Unknown";
 
   const displayAvatar =
     chat.type === "group" ? chat.avatar : chat.participants[0]?.avatar;
@@ -76,7 +78,7 @@ export function ChatHeader({ chat, onBack, onViewInfo }: ChatHeaderProps) {
           <div className="relative">
             <Avatar className="h-12 w-12">
               <AvatarImage
-                src={displayAvatar}
+                src={displayAvatar ?? undefined}
                 alt={displayName}
                 className="object-cover"
               />

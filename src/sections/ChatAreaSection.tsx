@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { Chat, Message, User } from "@/types/client";
+import { Chat, Message, User, getDisplayName } from "@/types/client";
 import { MainContent, EmptyChat } from "@/components/layout/MainContent";
 import { ChatHeader } from "@/components/chat/ChatHeader";
 import { MessageList } from "@/components/chat/MessageList";
@@ -65,7 +65,11 @@ export function ChatAreaSection({
         onSend={onSendMessage}
         onTyping={handleTyping}
         placeholder={`Message ${
-          chat.type === "group" ? chat.name : chat.participants[0]?.name
+          chat.type === "group"
+            ? chat.name
+            : chat.participants[0]
+            ? getDisplayName(chat.participants[0])
+            : "Unknown"
         }`}
       />
     </MainContent>

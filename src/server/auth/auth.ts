@@ -1,6 +1,5 @@
 import "server-only";
-import { db } from "@/server/db";
-import { generateId } from "@/server/utils/ids";
+import prisma from "@/lib/prisma";
 import {
   hashPassword,
   verifyPassword,
@@ -8,15 +7,25 @@ import {
 } from "./password";
 import { signAccessToken } from "./jwt";
 import { verifyGoogleToken } from "./google";
+import type { AuthUser, AuthResponse, AuthProvider } from "@/types/auth";
 import type {
-  AuthUser,
-  AuthResponse,
-  EmailSignupRequest,
-  EmailLoginRequest,
-  GoogleAuthRequest,
-  AuthProvider,
-} from "@/types/auth";
-import type { UserRow } from "@/server/db/schema";
+  SignupInput,
+  LoginInput,
+  GoogleAuthInput,
+} from "@/schemas/auth.schema";
+
+// Full user type from Prisma query
+type FullUser = {
+  id: string;
+  username: string;
+  email: string;
+  displayName: string | null;
+  avatar: string | null;
+  provider: AuthProvider;
+  providerId: string | null;
+  createdAt: Date;
+  passwordHash: string | null;
+};
 
 // Error types for auth operations
 export class AuthError extends Error {
@@ -25,6 +34,7 @@ export class AuthError extends Error {
     public code:
       | "INVALID_CREDENTIALS"
       | "EMAIL_EXISTS"
+      | "USERNAME_EXISTS"
       | "INVALID_TOKEN"
       | "WEAK_PASSWORD"
       | "PROVIDER_ERROR"
@@ -35,17 +45,18 @@ export class AuthError extends Error {
 }
 
 /**
- * Convert database row to AuthUser
+ * Convert Prisma user to AuthUser
  */
-function rowToAuthUser(row: UserRow): AuthUser {
+function toAuthUser(user: FullUser): AuthUser {
   return {
-    id: row.id,
-    email: row.email,
-    name: row.name,
-    avatar: row.avatar,
-    provider: row.provider as AuthProvider,
-    providerId: row.provider_id,
-    createdAt: row.created_at,
+    id: user.id,
+    username: user.username,
+    email: user.email,
+    displayName: user.displayName,
+    avatar: user.avatar,
+    provider: user.provider,
+    providerId: user.providerId,
+    createdAt: user.createdAt,
   };
 }
 
@@ -53,9 +64,9 @@ function rowToAuthUser(row: UserRow): AuthUser {
  * Signup with email and password
  */
 export async function signupWithEmail(
-  request: EmailSignupRequest
+  input: SignupInput
 ): Promise<AuthResponse> {
-  const { email, password, name } = request;
+  const { email, password, username, displayName } = input;
 
   // Validate password strength
   const passwordError = validatePasswordStrength(password);
@@ -64,29 +75,42 @@ export async function signupWithEmail(
   }
 
   // Check if email already exists
-  const existing = await db.query(`SELECT id FROM users WHERE email = $1`, [
-    email.toLowerCase(),
-  ]);
+  const existingEmail = await prisma.user.findUnique({
+    where: { email },
+    select: { id: true },
+  });
 
-  if (existing.rows.length > 0) {
+  if (existingEmail) {
     throw new AuthError(
       "Unable to create account. Please try again.",
       "EMAIL_EXISTS"
     );
   }
 
+  // Check if username already exists
+  const existingUsername = await prisma.user.findUnique({
+    where: { username },
+    select: { id: true },
+  });
+
+  if (existingUsername) {
+    throw new AuthError("This username is already taken.", "USERNAME_EXISTS");
+  }
+
   // Hash password and create user
   const passwordHash = await hashPassword(password);
-  const userId = generateId();
 
-  const result = await db.query<UserRow>(
-    `INSERT INTO users (id, email, name, password_hash, provider)
-     VALUES ($1, $2, $3, $4, 'email')
-     RETURNING *`,
-    [userId, email.toLowerCase(), name, passwordHash]
-  );
+  const user = await prisma.user.create({
+    data: {
+      email,
+      username,
+      displayName: displayName || null,
+      passwordHash,
+      provider: "email",
+    },
+  });
 
-  const user = rowToAuthUser(result.rows[0]);
+  const authUser = toAuthUser(user);
 
   // Generate access token
   const accessToken = await signAccessToken({
@@ -94,31 +118,26 @@ export async function signupWithEmail(
     email: user.email,
   });
 
-  return { user, accessToken };
+  return { user: authUser, accessToken };
 }
 
 /**
  * Login with email and password
  */
-export async function loginWithEmail(
-  request: EmailLoginRequest
-): Promise<AuthResponse> {
-  const { email, password } = request;
+export async function loginWithEmail(input: LoginInput): Promise<AuthResponse> {
+  const { email, password } = input;
 
   // Find user by email
-  const result = await db.query<UserRow>(
-    `SELECT * FROM users WHERE email = $1`,
-    [email.toLowerCase()]
-  );
+  const user = await prisma.user.findUnique({
+    where: { email },
+  });
 
-  if (result.rows.length === 0) {
+  if (!user) {
     throw new AuthError("Invalid email or password", "INVALID_CREDENTIALS");
   }
 
-  const row = result.rows[0];
-
   // Check if user has a password (email provider)
-  if (!row.password_hash) {
+  if (!user.passwordHash) {
     throw new AuthError(
       "This account uses Google sign-in. Please login with Google.",
       "INVALID_CREDENTIALS"
@@ -126,12 +145,12 @@ export async function loginWithEmail(
   }
 
   // Verify password
-  const isValid = await verifyPassword(password, row.password_hash);
+  const isValid = await verifyPassword(password, user.passwordHash);
   if (!isValid) {
     throw new AuthError("Invalid email or password", "INVALID_CREDENTIALS");
   }
 
-  const user = rowToAuthUser(row);
+  const authUser = toAuthUser(user);
 
   // Generate access token
   const accessToken = await signAccessToken({
@@ -139,16 +158,16 @@ export async function loginWithEmail(
     email: user.email,
   });
 
-  return { user, accessToken };
+  return { user: authUser, accessToken };
 }
 
 /**
  * Login/Signup with Google OAuth
  */
 export async function loginWithGoogle(
-  request: GoogleAuthRequest
+  input: GoogleAuthInput
 ): Promise<AuthResponse> {
-  const { googleToken } = request;
+  const { googleToken } = input;
 
   // Verify Google ID token
   const googlePayload = await verifyGoogleToken(googleToken);
@@ -161,54 +180,59 @@ export async function loginWithGoogle(
   }
 
   // Check if user exists with this Google ID
-  let result = await db.query<UserRow>(
-    `SELECT * FROM users WHERE provider = 'google' AND provider_id = $1`,
-    [googlePayload.sub]
-  );
+  let user = await prisma.user.findFirst({
+    where: {
+      provider: "google",
+      providerId: googlePayload.sub,
+    },
+  });
 
-  let user: AuthUser;
-
-  if (result.rows.length === 0) {
+  if (!user) {
     // Check if email exists with different provider
-    const emailCheck = await db.query<UserRow>(
-      `SELECT * FROM users WHERE email = $1`,
-      [googlePayload.email.toLowerCase()]
-    );
+    const existingUser = await prisma.user.findUnique({
+      where: { email: googlePayload.email.toLowerCase() },
+    });
 
-    if (emailCheck.rows.length > 0) {
+    if (existingUser) {
       // Link Google to existing email account (update provider)
-      result = await db.query<UserRow>(
-        `UPDATE users 
-         SET provider = 'google', provider_id = $1, avatar = COALESCE(avatar, $2), updated_at = NOW()
-         WHERE email = $3
-         RETURNING *`,
-        [
-          googlePayload.sub,
-          googlePayload.picture,
-          googlePayload.email.toLowerCase(),
-        ]
-      );
-      user = rowToAuthUser(result.rows[0]);
+      user = await prisma.user.update({
+        where: { id: existingUser.id },
+        data: {
+          provider: "google",
+          providerId: googlePayload.sub,
+          avatar: existingUser.avatar || googlePayload.picture,
+        },
+      });
     } else {
-      // Create new user
-      const userId = generateId();
-      result = await db.query<UserRow>(
-        `INSERT INTO users (id, email, name, avatar, provider, provider_id)
-         VALUES ($1, $2, $3, $4, 'google', $5)
-         RETURNING *`,
-        [
-          userId,
-          googlePayload.email.toLowerCase(),
-          googlePayload.name,
-          googlePayload.picture,
-          googlePayload.sub,
-        ]
-      );
-      user = rowToAuthUser(result.rows[0]);
+      // Create new user - generate username from email
+      const baseUsername = googlePayload.email
+        .split("@")[0]
+        .toLowerCase()
+        .replace(/[^a-z0-9_]/g, "")
+        .substring(0, 15);
+
+      // Ensure unique username
+      let username = baseUsername;
+      let counter = 1;
+      while (await prisma.user.findUnique({ where: { username } })) {
+        username = `${baseUsername}${counter}`;
+        counter++;
+      }
+
+      user = await prisma.user.create({
+        data: {
+          email: googlePayload.email.toLowerCase(),
+          username,
+          displayName: googlePayload.name,
+          avatar: googlePayload.picture,
+          provider: "google",
+          providerId: googlePayload.sub,
+        },
+      });
     }
-  } else {
-    user = rowToAuthUser(result.rows[0]);
   }
+
+  const authUser = toAuthUser(user);
 
   // Generate access token
   const accessToken = await signAccessToken({
@@ -216,20 +240,35 @@ export async function loginWithGoogle(
     email: user.email,
   });
 
-  return { user, accessToken };
+  return { user: authUser, accessToken };
 }
 
 /**
  * Get user by ID
  */
 export async function getUserById(userId: string): Promise<AuthUser | null> {
-  const result = await db.query<UserRow>(`SELECT * FROM users WHERE id = $1`, [
-    userId,
-  ]);
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+  });
 
-  if (result.rows.length === 0) {
+  if (!user) {
     return null;
   }
 
-  return rowToAuthUser(result.rows[0]);
+  return toAuthUser(user);
+}
+
+/**
+ * Get user by email
+ */
+export async function getUserByEmail(email: string): Promise<AuthUser | null> {
+  const user = await prisma.user.findUnique({
+    where: { email: email.toLowerCase() },
+  });
+
+  if (!user) {
+    return null;
+  }
+
+  return toAuthUser(user);
 }

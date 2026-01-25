@@ -3,23 +3,23 @@ import {
   signupWithEmail,
   loginWithEmail,
   loginWithGoogle,
-  AuthError,
-  getAuthContext,
+  getUserById,
 } from "@/server/auth";
+import { getAuthContext } from "@/server/auth/middleware";
 import { setAuthCookie, clearAuthCookie } from "@/server/auth/session";
-import type {
-  EmailSignupRequest,
-  EmailLoginRequest,
-  GoogleAuthRequest,
-  AuthResponse,
-} from "@/types/auth";
+import {
+  signupSchema,
+  loginSchema,
+  googleAuthSchema,
+} from "@/schemas/auth.schema";
+import type { AuthResponse } from "@/types/auth";
 
 /**
  * POST /api/auth
  * Unified auth endpoint with action-based routing
  *
  * Actions:
- * - signup: Email + password signup
+ * - signup: Email + password signup (with username)
  * - login: Email + password login
  * - google: Google OAuth login/signup
  * - logout: Logout (clear cookie)
@@ -34,13 +34,13 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
     switch (action) {
       case "signup":
-        return handleSignup(data as unknown as EmailSignupRequest);
+        return handleSignup(data);
 
       case "login":
-        return handleLogin(data as unknown as EmailLoginRequest);
+        return handleLogin(data);
 
       case "google":
-        return handleGoogleAuth(data as unknown as GoogleAuthRequest);
+        return handleGoogleAuth(data);
 
       case "logout":
         return handleLogout();
@@ -55,7 +55,10 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const err = error as { message?: string; code?: string };
 
     if (err.code) {
-      const statusCode = err.code === "EMAIL_EXISTS" ? 409 : 401;
+      const statusCode =
+        err.code === "EMAIL_EXISTS" || err.code === "USERNAME_EXISTS"
+          ? 409
+          : 401;
       return NextResponse.json(
         { error: err.message || "Authentication failed", code: err.code },
         { status: statusCode }
@@ -69,67 +72,79 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 }
 
 /**
- * Handle email signup
+ * Handle email signup with Zod validation
  */
 async function handleSignup(
-  data: EmailSignupRequest
+  data: unknown
 ): Promise<NextResponse<AuthResponse | { error: string }>> {
-  if (!data.email || !data.password || !data.name) {
+  // Validate with Zod
+  const result = signupSchema.safeParse(data);
+
+  if (!result.success) {
+    const error = result.error.issues[0];
     return NextResponse.json(
-      { error: "Email, password, and name are required" },
+      { error: error?.message || "Invalid input" },
       { status: 400 }
     );
   }
 
-  const result = await signupWithEmail(data);
+  const authResult = await signupWithEmail(result.data);
 
   // Set cookie
-  await setAuthCookie(result.accessToken);
+  await setAuthCookie(authResult.accessToken);
 
-  return NextResponse.json(result);
+  return NextResponse.json(authResult);
 }
 
 /**
- * Handle email login
+ * Handle email login with Zod validation
  */
 async function handleLogin(
-  data: EmailLoginRequest
+  data: unknown
 ): Promise<NextResponse<AuthResponse | { error: string }>> {
-  if (!data.email || !data.password) {
+  // Validate with Zod
+  const result = loginSchema.safeParse(data);
+
+  if (!result.success) {
+    const error = result.error.issues[0];
     return NextResponse.json(
-      { error: "Email and password are required" },
+      { error: error?.message || "Invalid input" },
       { status: 400 }
     );
   }
 
-  const result = await loginWithEmail(data);
+  const authResult = await loginWithEmail(result.data);
 
   // Set cookie
-  await setAuthCookie(result.accessToken);
+  await setAuthCookie(authResult.accessToken);
 
-  return NextResponse.json(result);
+  return NextResponse.json(authResult);
 }
 
 /**
- * Handle Google OAuth
+ * Handle Google OAuth with Zod validation
  */
 async function handleGoogleAuth(
-  data: GoogleAuthRequest
+  data: unknown
 ): Promise<NextResponse<AuthResponse | { error: string }>> {
-  if (!data.googleToken) {
+  // Validate with Zod
+  const result = googleAuthSchema.safeParse(data);
+
+  if (!result.success) {
+    const error = result.error.issues[0];
     return NextResponse.json(
-      { error: "Google token is required" },
+      { error: error?.message || "Invalid input" },
       { status: 400 }
     );
   }
 
   try {
-    const result = await loginWithGoogle(data);
+    const authResult = await loginWithGoogle(result.data);
 
     // Set cookie
-    await setAuthCookie(result.accessToken);
+    await setAuthCookie(authResult.accessToken);
 
-    return NextResponse.json(result);
+    return NextResponse.json(authResult);
   } catch (error: unknown) {
     console.error("Google auth error:", error);
     const err = error as { message?: string; code?: string };
@@ -172,8 +187,6 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
 
-  // Import here to avoid circular dependency
-  const { getUserById } = await import("@/server/auth");
   const user = await getUserById(authContext.userId);
 
   if (!user) {

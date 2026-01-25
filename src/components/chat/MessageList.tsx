@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useEffect } from "react";
-import { Message, User } from "@/types/client";
+import { Message, User, getDisplayName } from "@/types/client";
 import { MessageBubble } from "./MessageBubble";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -109,8 +109,8 @@ export function MessageList({
                   message={message}
                   isOwn={isOwn}
                   showAvatar={showAvatar}
-                  senderName={sender?.name}
-                  senderAvatar={sender?.avatar}
+                  senderName={sender ? getDisplayName(sender) : undefined}
+                  senderAvatar={sender?.avatar ?? undefined}
                 />
               );
             })}

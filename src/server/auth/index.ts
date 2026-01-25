@@ -4,6 +4,7 @@ export {
   loginWithEmail,
   loginWithGoogle,
   getUserById,
+  getUserByEmail,
   AuthError,
 } from "./auth";
 

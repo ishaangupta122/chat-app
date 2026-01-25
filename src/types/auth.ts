@@ -1,4 +1,4 @@
-// Auth Provider Types
+// Auth Provider Types (matches Prisma enum)
 export type AuthProvider = "email" | "google";
 
 // JWT Payload - Single source of truth for user identity
@@ -10,10 +10,12 @@ export interface JWTPayload {
 }
 
 // User data for auth operations
+// Note: This is for internal auth use, includes some private fields
 export interface AuthUser {
   id: string;
+  username: string;
   email: string;
-  name: string | null;
+  displayName: string | null;
   avatar: string | null;
   provider: AuthProvider;
   providerId: string | null;
@@ -24,7 +26,8 @@ export interface AuthUser {
 export interface EmailSignupRequest {
   email: string;
   password: string;
-  name: string;
+  username: string;
+  displayName?: string;
 }
 
 export interface GoogleAuthRequest {

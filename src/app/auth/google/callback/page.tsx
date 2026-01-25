@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { loginWithGoogle } from "@/api/auth";
+import { loginWithGoogle } from "@/services/auth";
 import { getAuthErrorMessage } from "@/lib/helpers";
 import { useAuth } from "@/context/AuthContext";
 import { Loader2 } from "lucide-react";

@@ -1,11 +1,20 @@
 // User Types
+// Client-side user representation
+// Note: 'id' here is for client-side state management only
+// The public identifier is always 'username'
 export interface User {
-  id: string;
-  name: string;
-  email: string;
-  avatar?: string;
+  id: string; // Internal client ID (for state management)
+  username: string;
+  displayName: string | null;
+  avatar?: string | null;
+  bio?: string | null;
   status: "online" | "offline" | "away";
   lastSeen?: Date;
+}
+
+// Helper to get display name or fallback to username
+export function getDisplayName(user: User): string {
+  return user.displayName || user.username;
 }
 
 // Message Types

@@ -14,7 +14,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { loginWithEmail } from "@/api/auth";
+import { loginWithEmail } from "@/services/auth";
 import { getAuthErrorMessage } from "@/lib/helpers";
 import { useAuth } from "@/context/AuthContext";
 import { MessageCircle, Loader2 } from "lucide-react";

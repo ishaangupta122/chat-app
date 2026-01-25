@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { User } from "@/types/client";
+import { User, getDisplayName } from "@/types/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -27,7 +27,7 @@ interface SettingsSectionProps {
   isOpen: boolean;
   onClose: () => void;
   user: User;
-  onUpdateProfile?: (data: { name: string; avatar?: string }) => void;
+  onUpdateProfile?: (data: { displayName: string; avatar?: string }) => void;
   onLogout: () => void;
 }
 
@@ -39,13 +39,13 @@ export function SettingsSection({
   onLogout,
 }: SettingsSectionProps) {
   const { theme, setTheme } = useTheme();
-  const [name, setName] = useState(user.name);
+  const [displayName, setDisplayName] = useState(getDisplayName(user));
   const [activeTab, setActiveTab] = useState<
     "profile" | "appearance" | "notifications"
   >("profile");
 
   const handleSave = () => {
-    onUpdateProfile?.({ name });
+    onUpdateProfile?.({ displayName });
     onClose();
   };
 
@@ -105,9 +105,12 @@ export function SettingsSection({
               <div className="space-y-6">
                 <div className="flex items-center gap-4">
                   <Avatar className="h-20 w-20">
-                    <AvatarImage src={user.avatar} alt={user.name} />
+                    <AvatarImage
+                      src={user.avatar ?? undefined}
+                      alt={getDisplayName(user)}
+                    />
                     <AvatarFallback className="bg-primary text-primary-foreground text-2xl">
-                      {getInitials(user.name)}
+                      {getInitials(getDisplayName(user))}
                     </AvatarFallback>
                   </Avatar>
                   <div>
@@ -125,18 +128,18 @@ export function SettingsSection({
                     Display Name
                   </label>
                   <Input
-                    value={name}
+                    value={displayName}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                      setName(e.target.value)
+                      setDisplayName(e.target.value)
                     }
                   />
                 </div>
 
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-foreground">
-                    Email
+                    Username
                   </label>
-                  <Input value={user.email} disabled />
+                  <Input value={`@${user.username}`} disabled />
                 </div>
 
                 <div className="flex justify-end gap-3">

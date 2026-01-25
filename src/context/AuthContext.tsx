@@ -13,7 +13,7 @@ import {
   loginWithEmail as apiLoginWithEmail,
   logout as apiLogout,
   getCurrentUser,
-} from "@/api/auth";
+} from "@/services/auth";
 import { getStoredUser, isAuthenticated, clearAuthData } from "@/lib/auth";
 import type { AuthUser } from "@/types/auth";
 import { toast } from "@/components/ui/toast";

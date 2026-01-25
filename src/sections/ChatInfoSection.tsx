@@ -1,6 +1,6 @@
 "use client";
 
-import { Chat } from "@/types/client";
+import { Chat, getDisplayName } from "@/types/client";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -33,7 +33,9 @@ export function ChatInfoSection({
   const isGroup = chat.type === "group";
   const displayName = isGroup
     ? chat.name || "Group"
-    : chat.participants[0]?.name || "Unknown";
+    : chat.participants[0]
+    ? getDisplayName(chat.participants[0])
+    : "Unknown";
   const displayAvatar = isGroup ? chat.avatar : chat.participants[0]?.avatar;
 
   const getInitials = (name: string) => {
@@ -56,7 +58,10 @@ export function ChatInfoSection({
           <div className="flex flex-col items-center text-center">
             <div className="relative">
               <Avatar className="h-20 w-20">
-                <AvatarImage src={displayAvatar} alt={displayName} />
+                <AvatarImage
+                  src={displayAvatar ?? undefined}
+                  alt={displayName}
+                />
                 <AvatarFallback className="bg-primary text-primary-foreground text-2xl">
                   {getInitials(displayName)}
                 </AvatarFallback>
@@ -68,9 +73,9 @@ export function ChatInfoSection({
             <h3 className="mt-4 text-lg font-semibold text-foreground">
               {displayName}
             </h3>
-            {!isGroup && chat.participants[0]?.email && (
+            {!isGroup && chat.participants[0]?.username && (
               <p className="text-sm text-muted-foreground">
-                {chat.participants[0].email}
+                @{chat.participants[0].username}
               </p>
             )}
             {isGroup && (
@@ -94,9 +99,12 @@ export function ChatInfoSection({
                       className="flex items-center gap-3 rounded-lg p-2">
                       <div className="relative">
                         <Avatar className="h-8 w-8">
-                          <AvatarImage src={member.avatar} alt={member.name} />
+                          <AvatarImage
+                            src={member.avatar ?? undefined}
+                            alt={getDisplayName(member)}
+                          />
                           <AvatarFallback className="bg-primary text-primary-foreground text-xs">
-                            {getInitials(member.name)}
+                            {getInitials(getDisplayName(member))}
                           </AvatarFallback>
                         </Avatar>
                         {member.status === "online" && (
@@ -105,7 +113,7 @@ export function ChatInfoSection({
                       </div>
                       <div className="flex-1">
                         <p className="text-sm font-medium text-foreground">
-                          {member.name}
+                          {getDisplayName(member)}
                           {member.id === currentUserId && (
                             <span className="ml-1 text-xs text-muted-foreground">
                               (You)

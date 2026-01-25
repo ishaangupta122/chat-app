@@ -55,15 +55,15 @@ export default function ChatPage() {
   const currentUser: User = user
     ? {
         id: user.id,
-        name: user.name || user.email,
-        email: user.email,
-        avatar: user.avatar || undefined,
+        username: user.username,
+        displayName: user.displayName || user.username || "User",
+        avatar: user.avatar ?? undefined,
         status: "online",
       }
     : {
         id: "",
-        name: "",
-        email: "",
+        username: "guest",
+        displayName: "Guest",
         status: "offline",
       };
 

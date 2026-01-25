@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { Chat } from "@/types/client";
+import { Chat, getDisplayName } from "@/types/client";
 import { ChatListItem } from "./ChatListItem";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -45,7 +45,11 @@ export function ChatList({
     const query = searchQuery.toLowerCase();
     return chats.filter((chat) => {
       const name =
-        chat.type === "group" ? chat.name : chat.participants[0]?.name;
+        chat.type === "group"
+          ? chat.name
+          : chat.participants[0]
+          ? getDisplayName(chat.participants[0])
+          : null;
       return name?.toLowerCase().includes(query);
     });
   }, [chats, searchQuery]);

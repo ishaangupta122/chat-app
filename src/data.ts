@@ -3,8 +3,8 @@ import { User, Chat, Message } from "@/types/client";
 // Current logged-in user
 export const currentUser: User = {
   id: "user-1",
-  name: "John Doe",
-  email: "john@example.com",
+  username: "johndoe",
+  displayName: "John Doe",
   status: "online",
   avatar: undefined,
 };
@@ -13,26 +13,26 @@ export const currentUser: User = {
 export const contacts: User[] = [
   {
     id: "user-2",
-    name: "Alice Smith",
-    email: "alice@example.com",
+    username: "alicesmith",
+    displayName: "Alice Smith",
     status: "online",
   },
   {
     id: "user-3",
-    name: "Bob Johnson",
-    email: "bob@example.com",
+    username: "bobjohnson",
+    displayName: "Bob Johnson",
     status: "offline",
   },
   {
     id: "user-4",
-    name: "Carol Williams",
-    email: "carol@example.com",
+    username: "carolw",
+    displayName: "Carol Williams",
     status: "away",
   },
   {
     id: "user-5",
-    name: "David Brown",
-    email: "david@example.com",
+    username: "davidb",
+    displayName: "David Brown",
     status: "online",
   },
 ];
