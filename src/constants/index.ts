@@ -74,3 +74,20 @@ export const SHORTCUTS = {
   sendMessage: "Enter",
   newLine: "Shift+Enter",
 } as const;
+
+// Auth Constants
+export const AUTH = {
+  ACCESS_TOKEN_EXPIRY: "15m",
+  REFRESH_TOKEN_EXPIRY: "7d",
+  ACCESS_TOKEN_EXPIRY_MS: 15 * 60 * 1000, // 15 minutes
+  REFRESH_TOKEN_EXPIRY_MS: 7 * 24 * 60 * 60 * 1000, // 7 days
+  PASSWORD_MIN_LENGTH: 8,
+} as const;
+
+// WebSocket Constants
+export const WS = {
+  PING_INTERVAL: 30000, // 30 seconds
+  PONG_TIMEOUT: 10000, // 10 seconds
+  RECONNECT_INTERVAL: 5000, // 5 seconds
+  MAX_RECONNECT_ATTEMPTS: 5,
+} as const;

@@ -23,7 +23,7 @@ import {
 
 interface SidebarHeaderProps {
   user: {
-    name: string;
+    displayName: string;
     avatar?: string;
     status: "online" | "offline" | "away";
   };
@@ -40,7 +40,8 @@ export function SidebarHeader({
 }: SidebarHeaderProps) {
   const { theme, setTheme } = useTheme();
 
-  const getInitials = (name: string) => {
+  const getInitials = (name: string | undefined | null) => {
+    if (!name) return "?";
     return name
       .split(" ")
       .map((n) => n[0])
@@ -55,9 +56,9 @@ export function SidebarHeader({
       <div className="flex items-center gap-3">
         <div className="relative">
           <Avatar className="h-10 w-10">
-            <AvatarImage src={user.avatar} alt={user.name} />
+            <AvatarImage src={user.avatar} alt={user.displayName} />
             <AvatarFallback className="bg-primary text-primary-foreground font-medium">
-              {getInitials(user.name)}
+              {getInitials(user.displayName)}
             </AvatarFallback>
           </Avatar>
           {user.status === "online" && (
@@ -66,7 +67,7 @@ export function SidebarHeader({
         </div>
         <div>
           <h2 className="text-base font-semibold text-foreground">
-            {user.name}
+            {user.displayName}
           </h2>
         </div>
       </div>
@@ -83,19 +84,22 @@ export function SidebarHeader({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem>
+            <DropdownMenuItem className="cursor-pointer">
               <Users className="mr-2 h-4 w-4" />
               New Group
             </DropdownMenuItem>
-            <DropdownMenuItem>
+            <DropdownMenuItem className="cursor-pointer">
               <Star className="mr-2 h-4 w-4" />
               Starred Messages
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onSettings?.()}>
+            <DropdownMenuItem
+              className="cursor-pointer"
+              onClick={() => onSettings?.()}>
               <Settings className="mr-2 h-4 w-4" />
               Settings
             </DropdownMenuItem>
             <DropdownMenuItem
+              className="cursor-pointer"
               onClick={() => setTheme(theme === "dark" ? "light" : "dark")}>
               {theme === "dark" ? (
                 <Sun className="mr-2 h-4 w-4" />
@@ -106,7 +110,7 @@ export function SidebarHeader({
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem
-              className="text-destructive"
+              className="cursor-pointer text-destructive"
               onClick={() => onLogout?.()}>
               <LogOut className="mr-2 h-4 w-4" />
               Log out

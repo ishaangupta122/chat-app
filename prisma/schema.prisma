@@ -1,0 +1,43 @@
+// Prisma Schema for Chat App
+// Privacy-First User Design
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// Auth Provider enum
+enum AuthProvider {
+  email
+  google
+}
+
+// User Model - Privacy-First Design
+// - id: internal only, never exposed in public APIs
+// - username: public, unique, the ONLY searchable field
+// - email/phone: private, never searchable
+model User {
+  id            String    @id @default(cuid())
+  username      String    @unique @db.VarChar(20)
+  email         String    @unique @db.VarChar(255)
+  phone         String?   @db.VarChar(20)
+  displayName   String?   @map("display_name") @db.VarChar(100)
+  bio           String?   @db.VarChar(500)
+  avatar        String?   @db.Text
+  passwordHash  String?   @map("password_hash") @db.Text
+  provider      AuthProvider @default(email)
+  providerId    String?   @map("provider_id") @db.VarChar(255)
+  isDiscoverable Boolean  @default(true) @map("is_discoverable")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  // Indexes
+  @@index([username])
+  @@index([email])
+  @@index([provider, providerId])
+  @@map("users")
+}
+

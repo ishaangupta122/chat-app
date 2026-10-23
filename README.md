@@ -1,36 +1,156 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 💬 Real-Time Messaging Platform
 
-## Getting Started
+A production-ready, relationship-driven real-time chat application built with **Next.js**, **WebSockets**, and **PostgreSQL**.  
+The system is designed with **clear separation of concerns**, **invite-based relationships**, and **scalable backend services**.
 
-First, run the development server:
+---
+
+## 📖 Description
+
+This project implements a modern messaging system supporting **1-to-1 chats**, **group chats**, and **real-time communication**.  
+It separates **stateful operations** (REST APIs) from **event-driven operations** (WebSockets) to ensure reliability, scalability, and maintainability.
+
+The architecture follows industry best practices used in real-world chat systems.
+
+---
+
+## 🧰 Tech Stack
+
+### Frontend
+
+- Next.js (App Router)
+- React
+- TypeScript
+
+### Backend
+
+- Next.js API Routes (REST)
+- Standalone Node.js WebSocket Server
+
+### Data & Infra
+
+- PostgreSQL (primary datastore)
+- Redis (optional, for pub/sub & presence)
+- JWT Authentication
+
+---
+
+## ⚙️ Setup Commands (Local Development)
 
 ```bash
+# Install dependencies
+npm install
+
+# Start Next.js (HTTP server)
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+
+# Start WebSocket server
+npm run ws:dev
+
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+---
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## ✨ Features
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### Authentication & Identity
 
-## Learn More
+- JWT-based authentication
+- Shared auth for REST APIs and WebSocket connections
+- Public (username) vs private (email/phone) identity separation
 
-To learn more about Next.js, take a look at the following resources:
+### User Discovery
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- Username-based search only
+- Privacy-first, opt-in discovery
+- Rate-limited search
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### Invite System (Core)
 
-## Deploy on Vercel
+- Unified invite model
+- Friend requests, group invites, email invites
+- Invite lifecycle: pending, accepted, rejected, expired
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### 1-to-1 Messaging
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Friend-based, consent-driven chats
+- Messaging unlocked only after invite acceptance
+- Saved users via friendships
+
+### Group Chats
+
+- Group creation and membership
+- Invite-link based joining
+- Role-based access (owner, admin, member)
+
+### Conversations & Messages
+
+- Conversation-based messaging model
+- Persistent message storage
+- Cursor-based pagination
+- Read receipts
+
+### Real-Time Capabilities
+
+- Dedicated WebSocket server
+- Real-time message delivery
+- Presence (online/offline)
+- Typing indicators
+- Conversation-based rooms
+
+### Architecture Guarantees
+
+- REST APIs handle state & persistence
+- WebSockets handle real-time delivery only
+- Shared backend logic for consistency
+- Separate runtimes for HTTP and WebSocket servers
+
+## 🗂️ Folder Structure
+
+```bash
+
+chat-app/
+├── src/
+│   ├── app/
+│   │   ├── api/
+│   │   │   ├── auth/
+│   │   │   ├── users/
+│   │   │   ├── invites/
+│   │   │   ├── friends/
+│   │   │   ├── conversations/
+│   │   │   ├── messages/
+│   │   │   ├── groups/
+│   │   │   └── health/
+│   │   ├── layout/
+│   │   └── pages/
+│   │
+│   ├── server/
+│   │   ├── auth/
+│   │   ├── db/
+│   │   ├── services/
+│   │   ├── permissions/
+│   │   ├── validators/
+│   │   └── utils/
+│   │
+│   ├── components/
+│   ├── sections/
+│   ├── hooks/
+│   ├── context/
+│   ├── constants/
+│   └── types/
+│
+├── ws-server/
+│   ├── src/
+│   │   ├── handlers/
+│   │   ├── events/
+│   │   ├── store/
+│   │   └── utils/
+│   │
+│   ├── package.json
+│   └── tsconfig.json
+│
+├── package.json
+├── tsconfig.json
+└── README.md
+
+```

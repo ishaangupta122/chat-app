@@ -1,4 +1,4 @@
-import { Message } from "@/types";
+import { Message } from "@/types/client";
 import { cn } from "@/lib/utils";
 import { formatMessageTime, extractCodeBlocks } from "@/lib/helpers";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";

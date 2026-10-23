@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/context/ThemeProvider";
+import { AuthProvider } from "@/context/AuthContext";
+import { Toaster } from "sonner";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -33,7 +35,14 @@ export default function RootLayout({
           defaultTheme="system"
           enableSystem
           disableTransitionOnChange>
-          {children}
+          <AuthProvider>{children}</AuthProvider>
+          <Toaster
+            position="top-right"
+            duration={4000}
+            toastOptions={{
+              className: "!p-0 !bg-transparent !border-0 !shadow-none",
+            }}
+          />
         </ThemeProvider>
       </body>
     </html>

@@ -1,8 +1,61 @@
+import { AxiosError } from "axios";
+
 export function generateId(): string {
   return (
     Math.random().toString(36).substring(2, 15) +
     Math.random().toString(36).substring(2, 15)
   );
+}
+
+/**
+ * User-friendly error messages for auth operations
+ */
+const AUTH_ERROR_MESSAGES: Record<string, string> = {
+  // Error codes from server
+  INVALID_CREDENTIALS: "The email or password you entered is incorrect.",
+  EMAIL_EXISTS: "This email is already registered. Try logging in instead.",
+  WEAK_PASSWORD: "Please choose a stronger password.",
+  INVALID_TOKEN: "Your session has expired. Please sign in again.",
+  PROVIDER_ERROR: "Unable to sign in with Google. Please try again.",
+};
+
+/**
+ * Get user-friendly message for auth errors
+ */
+export function getAuthErrorMessage(error: unknown, fallback: string): string {
+  if (error instanceof AxiosError && error.response?.data) {
+    const { code, error: message } = error.response.data;
+
+    // First check if we have a mapped message for the error code
+    if (code && AUTH_ERROR_MESSAGES[code]) {
+      return AUTH_ERROR_MESSAGES[code];
+    }
+
+    // For weak password, the server sends the specific requirement
+    if (code === "WEAK_PASSWORD" && message) {
+      return message;
+    }
+
+    // If server sent a message, use it (but not for 500 errors)
+    if (message && error.response.status !== 500) {
+      return message;
+    }
+  }
+
+  return fallback;
+}
+
+/**
+ * Extract error message from axios errors or generic errors
+ */
+export function getErrorMessage(error: unknown, fallback: string): string {
+  if (error instanceof AxiosError && error.response?.data?.error) {
+    return error.response.data.error;
+  }
+  if (error instanceof Error) {
+    return error.message;
+  }
+  return fallback;
 }
 
 export function formatMessageTime(date: Date): string {
